@@ -10,7 +10,9 @@ import connectMongoDB from "./db/connectMongoDB.js";
 const app = express();
 const PORT = process.env.PORT || 8000;
 dotenv.config();
+
 // middleware
+app.use(express.json()); // parse req.body
 
 // routes
 app.use("", routerIndex);
