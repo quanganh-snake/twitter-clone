@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 // Routes Important
 import routerIndex from "./routes/index.js";
 import connectMongoDB from "./db/connectMongoDB.js";
+import cookieParser from "cookie-parser";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -13,9 +14,10 @@ dotenv.config();
 
 // middleware
 app.use(express.json()); // parse req.body
-
+app.use(express.urlencoded({ extended: true })); // parse req.body : x-www-form-urlencoded
+app.use(cookieParser());
 // routes
-app.use("", routerIndex);
+app.use("/", routerIndex);
 
 // root server
 const __dirname = dirname(fileURLToPath(import.meta.url));
