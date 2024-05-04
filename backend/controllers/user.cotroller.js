@@ -1,10 +1,4 @@
 import { v2 as cloudinary } from "cloudinary";
-
-cloudinary.config({
-	cloud_name: "next-eshop",
-	api_key: "438488321313344",
-	api_secret: "squDRZ_Yztq8ayWAF_i4WKtH5qE",
-});
 import bcrypt from "bcryptjs";
 // Models
 import User from "../models/user.model.js";
