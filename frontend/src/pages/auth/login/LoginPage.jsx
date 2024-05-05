@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import XSvg from "../../../components/svgs/X";
 
@@ -14,7 +14,14 @@ const LoginPage = () => {
 		password: "",
 	});
 
-	const { loginMutation, isPending, error, isError } = useMutation({
+	const queryClient = useQueryClient();
+
+	const {
+		mutate: loginMutation,
+		isPending,
+		error,
+		isError,
+	} = useMutation({
 		mutationFn: async ({ username, password }) => {
 			try {
 				const res = await fetch("/api/auth/login", {
@@ -33,6 +40,9 @@ const LoginPage = () => {
 				// console.error(error);
 				throw error;
 			}
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["authUser"] });
 		},
 	});
 
