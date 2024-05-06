@@ -20,7 +20,8 @@ cloudinary.config({
 });
 
 // middleware
-app.use(express.json()); // parse req.body
+app.use(express.json({ limit: "5mb" })); // parse req.body
+// limit shouldn't be too high to prevent DOS
 app.use(express.urlencoded({ extended: true })); // parse req.body : x-www-form-urlencoded
 app.use(cookieParser());
 // routes
