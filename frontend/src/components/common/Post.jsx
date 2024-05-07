@@ -17,7 +17,7 @@ const Post = ({ post }) => {
 		queryKey: ["authUser"],
 	});
 
-	const { mutate: deletePost, isPending } = useMutation({
+	const { mutate: deletePost, isPending: isDeleting } = useMutation({
 		mutationFn: async () => {
 			try {
 				const res = await fetch(`/api/post/${post._id}`, {
@@ -39,8 +39,43 @@ const Post = ({ post }) => {
 		},
 	});
 
+	const { mutate: likePost, isPending: isLiking } = useMutation({
+		mutationFn: async () => {
+			try {
+				const res = await fetch(`/api/post/like/${post._id}`, {
+					method: "POST",
+				});
+				const data = await res.json();
+				if (!res.ok) throw new Error(data.error || "Something went wrong! Please try again later.");
+				return data;
+			} catch (error) {
+				throw new Error(error);
+			}
+		},
+		onSuccess: (updatedLikes) => {
+			// TODO: inavlidate query to refetch the posts -> not the best UX -> because it will refetch all the posts
+			// queryClient.invalidateQueries({ queryKey: ["posts"] });
+
+			// TODO: instead, update the cache directly for that post
+			queryClient.setQueryData(["posts"], (prevPosts) => {
+				return prevPosts.map((prevPost) => {
+					if (prevPost._id === post._id) {
+						return {
+							...prevPost,
+							likes: updatedLikes,
+						};
+					}
+					return prevPost;
+				});
+			});
+		},
+		onError: (error) => {
+			toast.error(error.message || "Something went wrong! Please try again later.");
+		},
+	});
+
 	const postOwner = post.user;
-	const isLiked = false;
+	const isLiked = post.likes.includes(authUser._id);
 
 	const isMyPost = authUser._id === post.user._id;
 
@@ -56,7 +91,10 @@ const Post = ({ post }) => {
 		e.preventDefault();
 	};
 
-	const handleLikePost = () => {};
+	const handleLikePost = () => {
+		if (isLiking) return;
+		likePost();
+	};
 
 	return (
 		<>
@@ -78,8 +116,8 @@ const Post = ({ post }) => {
 						</span>
 						{isMyPost && (
 							<span className="flex justify-end flex-1">
-								{!isPending && <FaTrash className="cursor-pointer hover:text-red-500" onClick={handleDeletePost} />}
-								{isPending && <LoadingSpinner size="sm" />}
+								{!isDeleting && <FaTrash className="cursor-pointer hover:text-red-500" onClick={handleDeletePost} />}
+								{isDeleting && <LoadingSpinner size="sm" />}
 							</span>
 						)}
 					</div>
@@ -108,7 +146,7 @@ const Post = ({ post }) => {
 												</div>
 												<div className="flex flex-col">
 													<div className="flex items-center gap-1">
-														<span className="font-bold">{comment.user.fullName}</span>
+														<span className="font-bold">{comment.user.fullname}</span>
 														<span className="text-gray-700 text-sm">@{comment.user.username}</span>
 													</div>
 													<div className="text-sm">{comment.text}</div>
@@ -123,9 +161,7 @@ const Post = ({ post }) => {
 											value={comment}
 											onChange={(e) => setComment(e.target.value)}
 										/>
-										<button className="btn btn-primary rounded-full btn-sm text-white px-4">
-											{isCommenting ? <span className="loading loading-spinner loading-md"></span> : "Post"}
-										</button>
+										<button className="btn btn-primary rounded-full btn-sm text-white px-4">{isCommenting ? <LoadingSpinner size="sm" /> : "Post"}</button>
 									</form>
 								</div>
 								<form method="dialog" className="modal-backdrop">
@@ -137,10 +173,11 @@ const Post = ({ post }) => {
 								<span className="text-sm text-slate-500 group-hover:text-green-500">0</span>
 							</div>
 							<div className="flex gap-1 items-center group cursor-pointer" onClick={handleLikePost}>
-								{!isLiked && <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-500" />}
-								{isLiked && <FaRegHeart className="w-4 h-4 cursor-pointer text-pink-500 " />}
+								{isLiking && <LoadingSpinner size="sm" />}
+								{!isLiked && !isLiking && <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-500" />}
+								{isLiked && !isLiking && <FaRegHeart className="w-4 h-4 cursor-pointer text-pink-500 " />}
 
-								<span className={`text-sm text-slate-500 group-hover:text-pink-500 ${isLiked ? "text-pink-500" : ""}`}>{post.likes.length}</span>
+								<span className={`text-sm group-hover:text-pink-500 ${isLiking ? "text-pink-500" : "text-slate-500"}`}>{post.likes.length}</span>
 							</div>
 						</div>
 						<div className="flex w-1/3 justify-end gap-2 items-center">
