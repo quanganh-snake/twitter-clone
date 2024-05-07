@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton";
-import { USERS_FOR_RIGHT_PANEL } from "../../utils/db/dummy";
 import { useQuery } from "@tanstack/react-query";
+import useFollow from "../../hooks/useFollow";
 
 const RightPanel = () => {
 	const { data: suggestedUsers, isLoading } = useQuery({
@@ -19,6 +19,8 @@ const RightPanel = () => {
 	});
 
 	if (suggestedUsers?.length === 0) return <div className="md:w-64 w-0"></div>;
+
+	const { follow, isPending } = useFollow();
 
 	return (
 		<div className="hidden lg:block my-4 mx-2">
@@ -49,8 +51,14 @@ const RightPanel = () => {
 									</div>
 								</div>
 								<div>
-									<button className="btn bg-white text-black hover:bg-white hover:opacity-90 rounded-full btn-sm" onClick={(e) => e.preventDefault()}>
-										Follow
+									<button
+										className="btn bg-white text-black hover:bg-white hover:opacity-90 rounded-full btn-sm"
+										onClick={(e) => {
+											e.preventDefault();
+											follow(user._id);
+										}}
+									>
+										{isPending ? "Following..." : "Follow"}
 									</button>
 								</div>
 							</Link>
